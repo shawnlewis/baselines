@@ -1,6 +1,5 @@
 import numpy as np
 import tensorflow as tf  # pylint: ignore-module
-import builtins
 import functools
 import copy
 import os
@@ -473,7 +472,7 @@ class _MemFriendlyFunction(object):
         for v in data_vals[1:]:
             assert v.shape[0] == n
         for i_start in range(0, n, self.batch_size):
-            slice_vals = [v[i_start:builtins.min(i_start + self.batch_size, n)] for v in data_vals]
+            slice_vals = [v[i_start:min(i_start + self.batch_size, n)] for v in data_vals]
             for (var, val) in zip(self.data_inputs, slice_vals):
                 feed_dict[var] = val
             results = tf.get_default_session().run(self.outputs, feed_dict=feed_dict)
