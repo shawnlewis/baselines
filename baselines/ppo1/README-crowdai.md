@@ -8,7 +8,7 @@ It has been modified to work with osim-rl for CrowdAI's Learning to Run Competit
 Installation
 ------------
 
-sudo apt-get install mpich
+sudo apt-get install mpich build-essential zlib1g-dev
 
 # with pyenv
 pyenv virtualenv anaconda2-4.4.0 baselines
@@ -23,3 +23,4 @@ conda install --channel kidzik opensim
 conda install --channel conda-forge lapack
 pip install git+https://github.com/stanfordnmbl/osim-rl.git
 pip install -e .
+pip install wandb
