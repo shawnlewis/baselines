@@ -96,9 +96,6 @@ def learn(env, policy_func,
     ob_space = env.observation_space
     ac_space = env.action_space
     pi = policy_func("pi", ob_space, ac_space) # Construct network for new policy
-    if load_model:
-        logger.log('Loading model: %s' % load_model)
-        pi.load(load_model)
     oldpi = policy_func("oldpi", ob_space, ac_space) # Network for old policy
     atarg = tf.placeholder(dtype=tf.float32, shape=[None]) # Target advantage function (if applicable)
     ret = tf.placeholder(dtype=tf.float32, shape=[None]) # Empirical return
@@ -134,6 +131,11 @@ def learn(env, policy_func,
 
     U.initialize()
     adam.sync()
+
+    if load_model:
+        logger.log('Loading model: %s' % load_model)
+        pi.load(load_model)
+
 
     # Prepare for rollouts
     # ----------------------------------------
