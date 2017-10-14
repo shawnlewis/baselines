@@ -5,7 +5,19 @@ wandb_version: 1
 
 visualize:
   desc: Turn on visualization of rollouts
-  value: False
+  value: True
+difficulty:
+  desc: Environment difficulty
+  value: 2
+fall_smoothing_exp:
+  desc: Reward-shaping. Fall smoothing exponent
+  value: 1.3
+fall_smoothing_max_penalty:
+  desc: Reward-shaping. Fall smoothing max penalty
+  value: 0
+velocity_penalty_mult:
+  desc: Reward-shaping. Velocity penalty multiplier
+  value: 0
 seed:
   desc: Run seed
   value: 0
@@ -25,8 +37,8 @@ optim_epochs:
   desc: Number of epochs in Adam update
   value: 15
 optim_batchsize:
-  desc: Batch size for each Adam update
-  value: 4096
+  desc: Batch size for each Adam update (mult by num processes)
+  value: 128
 optim_stepsize:
   desc: Adam step size per update
   value: 0.0003
@@ -45,3 +57,5 @@ load_model:
 hidden_layers:
   desc: Hidden layer widths
   value: [128, 64]
+load_model:
+  value: False
