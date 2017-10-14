@@ -8,6 +8,8 @@ It has been modified to work with osim-rl for CrowdAI's Learning to Run Competit
 Installation
 ------------
 
+sudo apt-get install mpich
+
 # with pyenv
 pyenv virtualenv anaconda2-4.4.0 baselines
 # Set pyenv's PYTHON_VERSION to 'baselines' or put 'baselines' in .python-version
