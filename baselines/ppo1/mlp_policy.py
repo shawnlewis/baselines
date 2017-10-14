@@ -57,3 +57,11 @@ class MlpPolicy(object):
     def get_initial_state(self):
         return []
 
+    def save(self, fname):
+        saver = tf.train.Saver()
+        saver.save(tf.get_default_session(), fname)
+
+    def load(self, fname):
+        saver = tf.train.Saver()
+        saver.restore(tf.get_default_session(), fname)
+
