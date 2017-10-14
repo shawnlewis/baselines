@@ -7,6 +7,9 @@ from baselines.common.mpi_adam import MpiAdam
 from baselines.common.mpi_moments import mpi_moments
 from mpi4py import MPI
 from collections import deque
+import os
+import json
+import copy
 
 def traj_segment_generator(pi, env, horizon, stochastic):
     t = 0
@@ -145,6 +148,13 @@ def learn(env, policy_func,
 
     assert sum([max_iters>0, max_timesteps>0, max_episodes>0, max_seconds>0])==1, "Only one time constraint permitted"
 
+    ep_rew_file = None
+    if MPI.COMM_WORLD.Get_rank()==0:
+        import wandb
+        ep_rew_file = open(os.path.join(wandb.run.dir, 'episode_rewards.jsonl'), 'w')
+        checkpoint_dir = 'checkpoints-%s' % wandb.run.id
+        os.mkdir(checkpoint_dir)
+
     while True:
         if callback: callback(locals(), globals())
         if max_timesteps and timesteps_so_far >= max_timesteps:
@@ -207,17 +217,33 @@ def learn(env, policy_func,
         lenbuffer.extend(lens)
         rewbuffer.extend(rews)
         logger.record_tabular("EpLenMean", np.mean(lenbuffer))
+        logger.record_tabular("EpRewMax", np.max(rewbuffer))
         logger.record_tabular("EpRewMean", np.mean(rewbuffer))
+        logger.record_tabular("EpRewMin", np.min(rewbuffer))
         logger.record_tabular("EpThisIter", len(lens))
         episodes_so_far += len(lens)
         timesteps_so_far += sum(lens)
         iters_so_far += 1
         logger.record_tabular("EpisodesSoFar", episodes_so_far)
         logger.record_tabular("TimestepsSoFar", timesteps_so_far)
-        logger.record_tabular("TimeElapsed", time.time() - tstart)
+        time_elapsed = time.time() - tstart
+        logger.record_tabular("TimeElapsed", time_elapsed)
         if MPI.COMM_WORLD.Get_rank()==0:
+            import wandb
+            ep_rew_file.write('%s\n' % json.dumps({
+                'TimeElapsed': time_elapsed,
+                'Rewards': rews}))
+            ep_rew_file.flush()
+            data = logger.Logger.CURRENT.name2val
+            wandb.run.history.add(data)
+            summary_data = {}
+            for k, v in data.iteritems():
+                if 'Rew' in k:
+                    summary_data[k] = v
+            wandb.run.summary.update(summary_data)
+            pi.save(os.path.join(checkpoint_dir, 'model-%s.ckpt' % (iters_so_far - 1)))
+
             logger.dump_tabular()
-            pi.save('model.ckpt')
 
 def flatten_lists(listoflists):
     return [el for list_ in listoflists for el in list_]

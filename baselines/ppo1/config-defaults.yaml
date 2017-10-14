@@ -1,0 +1,47 @@
+wandb_version: 1
+
+# Example variables below. Uncomment (remove leading '# ') to use them, or just
+# delete and create your own.
+
+visualize:
+  desc: Turn on visualization of rollouts
+  value: False
+seed:
+  desc: Run seed
+  value: 0
+max_timesteps:
+  desc: Maximum number of simulation timesteps before exit
+  value: 400000000
+horizon:
+  desc: Horizon parameter, number of timesteps per rollout batch.
+  value: 512
+clip_param:
+  desc: PPO Clip parameter
+  value: 0.2
+entcoeff:
+  desc: Penalty parameter. Paper says performs worse.
+  value: 0.0
+optim_epochs:
+  desc: Number of epochs in Adam update
+  value: 15
+optim_batchsize:
+  desc: Batch size for each Adam update
+  value: 4096
+optim_stepsize:
+  desc: Adam step size per update
+  value: 0.0003
+discount:
+  desc: RL discount
+  value: 0.99
+lam:
+  desc: What is this?
+  value: 0.95
+lr_schedule:
+  desc: Anneal learning rate, either constant or linear
+  value: constant
+load_model:
+  desc: Model checkpoint to start from
+  value: False
+hidden_layers:
+  desc: Hidden layer widths
+  value: [128, 64]

@@ -26,29 +26,44 @@ class FixedRunEnv(RunEnv):
     def get_observation(self):
         return np.array(super(FixedRunEnv, self).get_observation())
 
-def train(num_timesteps, seed):
+def train():
     from baselines.ppo1 import mlp_policy, pposgd_simple
     import baselines.common.tf_util as U
     rank = MPI.COMM_WORLD.Get_rank()
+    if rank == 0:
+        import wandb
+        run = wandb.init()
+        config = run.config._items
+        print(config)
+    else:
+        config = None
+    config = MPI.COMM_WORLD.bcast(config)
+
     sess = U.single_threaded_session()
     sess.__enter__()
+
     if rank != 0: logger.set_level(logger.DISABLED)
-    workerseed = seed + 1000000 * MPI.COMM_WORLD.Get_rank()
+
+    workerseed = config['seed'] + 1000000 * MPI.COMM_WORLD.Get_rank()
     set_global_seeds(workerseed)
-    env = FixedRunEnv(visualize=True)
+
+    env = FixedRunEnv(visualize=config['visualize'])
 
     def policy_fn(name, ob_space, ac_space):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
-            hid_size=64, num_hid_layers=2)
+            hid_sizes=config['hidden_layers'],
+            num_hid_layers=len(config['hidden_layers']))
     #env = bench.Monitor(env, logger.get_dir() and 
     #    osp.join(logger.get_dir(), "monitor.json"))
     env.seed(workerseed)
     pposgd_simple.learn(env, policy_fn, 
-            max_timesteps=num_timesteps,
-            timesteps_per_batch=2048,
-            clip_param=0.2, entcoeff=0.0,
-            optim_epochs=10, optim_stepsize=3e-4, optim_batchsize=64,
-            gamma=0.99, lam=0.95, schedule='linear',
+            max_timesteps=config['max_timesteps'],
+            timesteps_per_batch=config['horizon'],
+            clip_param=config['clip_param'], entcoeff=config['entcoeff'],
+            optim_epochs=config['optim_epochs'], optim_stepsize=config['optim_stepsize'],
+            optim_batchsize=config['optim_batchsize'],
+            gamma=config['discount'], lam=config['lam'], schedule=config['lr_schedule'],
+            load_model=config['load_model']
         )
     env.close()
 
@@ -57,7 +72,7 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
     args = parser.parse_args()
-    train(num_timesteps=1e6, seed=args.seed)
+    train()
 
 
 if __name__ == '__main__':
