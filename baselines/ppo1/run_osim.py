@@ -22,6 +22,8 @@ class FixedRunEnv(RunEnv):
         self._velocity_penalty_mult = velocity_penalty_mult
         self._alive_bonus = alive_bonus
         super(FixedRunEnv, self).__init__(visualize=visualize)
+        self.spec.timestep_limit = 500
+        self.horizon = 500
 
     def seed(self, seed):
         self._saved_seed = seed
