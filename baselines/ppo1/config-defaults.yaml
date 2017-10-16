@@ -11,13 +11,16 @@ difficulty:
   value: 2
 fall_smoothing_exp:
   desc: Reward-shaping. Fall smoothing exponent
-  value: 1.3
+  value: 2.0
 fall_smoothing_max_penalty:
   desc: Reward-shaping. Fall smoothing max penalty
   value: 0
 velocity_penalty_mult:
   desc: Reward-shaping. Velocity penalty multiplier
   value: 0
+alive_bonus:
+  desc: Alive bonus.
+  value: 0.01
 seed:
   desc: Run seed
   value: 0
@@ -38,7 +41,7 @@ optim_epochs:
   value: 15
 optim_batchsize:
   desc: Batch size for each Adam update (mult by num processes)
-  value: 128
+  value: 16
 optim_stepsize:
   desc: Adam step size per update
   value: 0.0003
@@ -56,6 +59,6 @@ load_model:
   value: False
 hidden_layers:
   desc: Hidden layer widths
-  value: [128, 64]
+  value: [256, 128]
 load_model:
   value: False

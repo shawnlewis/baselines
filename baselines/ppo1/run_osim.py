@@ -14,11 +14,13 @@ import numpy as np
 
 class FixedRunEnv(RunEnv):
     def __init__(self, visualize=False, difficulty=2,
-            fall_smoothing_exp=2, fall_smoothing_max_penalty=0, velocity_penalty_mult=0):
+            fall_smoothing_exp=2, fall_smoothing_max_penalty=0, velocity_penalty_mult=0,
+            alive_bonus=0):
         self._saved_difficulty = difficulty
         self._fall_smoothing_exp = fall_smoothing_exp
         self._fall_smoothing_max_penalty = fall_smoothing_max_penalty
         self._velocity_penalty_mult = velocity_penalty_mult
+        self._alive_bonus = alive_bonus
         super(FixedRunEnv, self).__init__(visualize=visualize)
 
     def seed(self, seed):
@@ -48,6 +50,8 @@ class FixedRunEnv(RunEnv):
         vel_squared_sum = np.sum(np.square(velocities))
         reward -= self._velocity_penalty_mult * vel_squared_sum
 
+        reward += self._alive_bonus
+
         return next_obs, reward, done, info
 
 def train():
@@ -76,7 +80,8 @@ def train():
         difficulty=config['difficulty'],
         fall_smoothing_exp=config['fall_smoothing_exp'],
         fall_smoothing_max_penalty=config['fall_smoothing_max_penalty'],
-        velocity_penalty_mult=config['velocity_penalty_mult'])
+        velocity_penalty_mult=config['velocity_penalty_mult'],
+        alive_bonus=config['alive_bonus'])
 
     def policy_fn(name, ob_space, ac_space):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
