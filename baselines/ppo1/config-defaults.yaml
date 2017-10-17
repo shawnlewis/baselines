@@ -57,6 +57,9 @@ optim_batchsize:
 optim_stepsize:
   desc: Adam step size per update
   value: 0.0003
+target_kl:
+  desc: target KL
+  value: 0.001
 discount:
   desc: RL discount
   value: 0.99
@@ -65,7 +68,7 @@ lam:
   value: 0.95
 lr_schedule:
   desc: Anneal learning rate, either constant or linear
-  value: constant
+  value: target_kl
 load_model:
   desc: Model checkpoint to start from
   value: False
@@ -75,4 +78,4 @@ hidden_layers:
 load_model:
   value: False
 load_model:
-  value: checkpoints/e3qwxd59-repeat/model-161.ckpt
+  value: checkpoints/5rpdymbm-timepen/model-40.ckpt

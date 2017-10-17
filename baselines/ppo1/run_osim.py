@@ -113,7 +113,8 @@ def train():
             load_model=config['load_model'],
             action_bias=config['action_bias'],
             action_repeat=config['action_repeat'],
-            action_repeat_rand=config['action_repeat_rand']
+            action_repeat_rand=config['action_repeat_rand'],
+            target_kl=config['target_kl']
         )
     env.close()
 

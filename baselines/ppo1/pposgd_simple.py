@@ -103,7 +103,8 @@ def learn(env, policy_func,
         load_model=None,
         action_bias=0.4,
         action_repeat=0,
-        action_repeat_rand=False
+        action_repeat_rand=False,
+        target_kl=0.01
         ):
     # Setup losses and stuff
     # ----------------------------------------
@@ -115,7 +116,8 @@ def learn(env, policy_func,
     ret = tf.placeholder(dtype=tf.float32, shape=[None]) # Empirical return
 
     lrmult = tf.placeholder(name='lrmult', dtype=tf.float32, shape=[]) # learning rate multiplier, updated with schedule
-    clip_param = clip_param * lrmult # Annealed cliping parameter epislon
+    # Not sure why they anneal clip and learning rate with the same parameter
+    #clip_param = clip_param * lrmult # Annealed cliping parameter epislon
 
     ob = U.get_placeholder_cached(name="ob")
     ac = pi.pdtype.sample_placeholder([None])
@@ -171,6 +173,7 @@ def learn(env, policy_func,
         checkpoint_dir = 'checkpoints-%s' % wandb.run.id
         os.mkdir(checkpoint_dir)
 
+    cur_lrmult = 1.0
     while True:
         if callback: callback(locals(), globals())
         if max_timesteps and timesteps_so_far >= max_timesteps:
@@ -186,6 +189,8 @@ def learn(env, policy_func,
             cur_lrmult = 1.0
         elif schedule == 'linear':
             cur_lrmult =  max(1.0 - float(timesteps_so_far) / max_timesteps, 0)
+        elif schedule == 'target_kl':
+            pass
         else:
             raise NotImplementedError
 
@@ -226,6 +231,12 @@ def learn(env, policy_func,
         logger.log(fmt_row(13, meanlosses))
         for (lossval, name) in zipsame(meanlosses, loss_names):
             logger.record_tabular("loss_"+name, lossval)
+        # check kl
+        if schedule == 'target_kl':
+            if meanlosses[3] > target_kl * 1.1:
+                cur_lrmult /= 1.5
+            elif meanlosses[3] < target_kl / 1.1:
+                cur_lrmult *= 1.5
         logger.record_tabular("ev_tdlam_before", explained_variance(vpredbefore, tdlamret))
         lrlocal = (seg["ep_lens"], seg["ep_rets"]) # local values
         listoflrpairs = MPI.COMM_WORLD.allgather(lrlocal) # list of tuples
@@ -233,6 +244,8 @@ def learn(env, policy_func,
         lenbuffer.extend(lens)
         rewbuffer.extend(rews)
         if rewbuffer:
+            logger.record_tabular('CurLrMult', cur_lrmult)
+            logger.record_tabular('StepSize', optim_stepsize * cur_lrmult)
             logger.record_tabular("EpLenMean", np.mean(lenbuffer))
             logger.record_tabular("EpRewMax", np.max(rewbuffer))
             logger.record_tabular("EpRewMean", np.mean(rewbuffer))
