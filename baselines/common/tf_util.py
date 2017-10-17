@@ -282,10 +282,12 @@ def save_state(fname):
 # ================================================================
 
 
-def normc_initializer(std=1.0):
+def normc_initializer(mean, std):
     def _initializer(shape, dtype=None, partition_info=None):  # pylint: disable=W0613
         out = np.random.randn(*shape).astype(np.float32)
         out *= std / np.sqrt(np.square(out).sum(axis=0, keepdims=True))
+        out += mean
+        #print('MEAN OUT', mean, std, out)
         return tf.constant(out)
     return _initializer
 
