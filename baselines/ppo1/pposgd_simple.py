@@ -11,7 +11,7 @@ import os
 import json
 import copy
 
-def traj_segment_generator(pi, env, horizon, stochastic):
+def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4):
     t = 0
     ac = env.action_space.sample() # not used, just so we have the datatype
     new = True # marks if we're on first timestep of an episode
@@ -51,7 +51,7 @@ def traj_segment_generator(pi, env, horizon, stochastic):
         acs[i] = ac
         prevacs[i] = prevac
 
-        ob, rew, new, _ = env.step(ac)
+        ob, rew, new, _ = env.step(action_bias + ac)
         rews[i] = rew
 
         cur_ep_ret += rew
@@ -89,7 +89,8 @@ def learn(env, policy_func,
         callback=None, # you can do anything in the callback, since it takes locals(), globals()
         adam_epsilon=1e-5,
         schedule='constant', # annealing for stepsize parameters (epsilon and adam)
-        load_model=None
+        load_model=None,
+        action_bias=0.4
         ):
     # Setup losses and stuff
     # ----------------------------------------
@@ -139,7 +140,7 @@ def learn(env, policy_func,
 
     # Prepare for rollouts
     # ----------------------------------------
-    seg_gen = traj_segment_generator(pi, env, timesteps_per_batch, stochastic=True)
+    seg_gen = traj_segment_generator(pi, env, timesteps_per_batch, stochastic=True, action_bias=action_bias)
 
     episodes_so_far = 0
     timesteps_so_far = 0

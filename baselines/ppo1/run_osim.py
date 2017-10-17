@@ -88,7 +88,10 @@ def train():
     def policy_fn(name, ob_space, ac_space):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
             hid_sizes=config['hidden_layers'],
-            num_hid_layers=len(config['hidden_layers']))
+            num_hid_layers=len(config['hidden_layers']),
+            gaussian_fixed_var=True,
+            init_pol_weight_stddev=config['init_pol_weight_stddev'],
+            init_logstd=config['init_logstd'])
     #env = bench.Monitor(env, logger.get_dir() and 
     #    osp.join(logger.get_dir(), "monitor.json"))
     env.seed(workerseed)
@@ -99,7 +102,8 @@ def train():
             optim_epochs=config['optim_epochs'], optim_stepsize=config['optim_stepsize'],
             optim_batchsize=config['optim_batchsize'],
             gamma=config['discount'], lam=config['lam'], schedule=config['lr_schedule'],
-            load_model=config['load_model']
+            load_model=config['load_model'],
+            action_bias=config['action_bias']
         )
     env.close()
 
