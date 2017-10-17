@@ -10,8 +10,9 @@ from collections import deque
 import os
 import json
 import copy
+import random
 
-def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action_repeat=0):
+def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action_repeat=0, action_repeat_rand=False):
     t = 0
     ac = env.action_space.sample() # not used, just so we have the datatype
     new = True # marks if we're on first timestep of an episode
@@ -38,7 +39,10 @@ def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action
             repeat_left -= 1
         else:
             ac, vpred = pi.act(stochastic, ob)
-            repeat_left = action_repeat
+            if action_repeat_rand:
+                repeat_left = random.randrange(action_repeat)
+            else:
+                repeat_left = action_repeat
         # Slight weirdness here because we need value function at time T
         # before returning segment [0, T-1] so we get the correct
         # terminal value
@@ -98,7 +102,8 @@ def learn(env, policy_func,
         schedule='constant', # annealing for stepsize parameters (epsilon and adam)
         load_model=None,
         action_bias=0.4,
-        action_repeat=0
+        action_repeat=0,
+        action_repeat_rand=False
         ):
     # Setup losses and stuff
     # ----------------------------------------
@@ -148,7 +153,7 @@ def learn(env, policy_func,
 
     # Prepare for rollouts
     # ----------------------------------------
-    seg_gen = traj_segment_generator(pi, env, timesteps_per_batch, stochastic=True, action_bias=action_bias, action_repeat=action_repeat)
+    seg_gen = traj_segment_generator(pi, env, timesteps_per_batch, stochastic=True, action_bias=action_bias, action_repeat=action_repeat, action_repeat_rand=action_repeat_rand)
 
     episodes_so_far = 0
     timesteps_so_far = 0

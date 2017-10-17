@@ -17,6 +17,8 @@ action_bias:
   value: 0.5
 action_repeat:
   value: 8
+action_repeat_rand:
+  value: True
 time_penalty:
   value: 0.2
 fall_smoothing_exp:

@@ -112,7 +112,8 @@ def train():
             gamma=config['discount'], lam=config['lam'], schedule=config['lr_schedule'],
             load_model=config['load_model'],
             action_bias=config['action_bias'],
-            action_repeat=config['action_repeat']
+            action_repeat=config['action_repeat'],
+            action_repeat_rand=config['action_repeat_rand']
         )
     env.close()
 
