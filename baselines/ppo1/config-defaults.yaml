@@ -16,7 +16,9 @@ init_logstd:
 action_bias:
   value: 0.5
 action_repeat:
-  value: 32
+  value: 8
+time_penalty:
+  value: 0.2
 fall_smoothing_exp:
   desc: Reward-shaping. Fall smoothing exponent
   value: 2.0
@@ -70,5 +72,5 @@ hidden_layers:
   value: [256, 128]
 load_model:
   value: False
-#load_model:
-#  value: checkpoints/fzwo6kqj-init/model-133.ckpt
+load_model:
+  value: checkpoints/e3qwxd59-repeat/model-161.ckpt

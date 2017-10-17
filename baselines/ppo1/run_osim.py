@@ -11,16 +11,19 @@ from baselines import logger
 import sys
 from osim.env import RunEnv
 import numpy as np
+import math
+import time
 
 class FixedRunEnv(RunEnv):
     def __init__(self, visualize=False, difficulty=2,
             fall_smoothing_exp=2, fall_smoothing_max_penalty=0, velocity_penalty_mult=0,
-            alive_bonus=0):
+            alive_bonus=0, time_penalty=0):
         self._saved_difficulty = difficulty
         self._fall_smoothing_exp = fall_smoothing_exp
         self._fall_smoothing_max_penalty = fall_smoothing_max_penalty
         self._velocity_penalty_mult = velocity_penalty_mult
         self._alive_bonus = alive_bonus
+        self._time_penalty = time_penalty
         super(FixedRunEnv, self).__init__(visualize=visualize)
         self.spec.timestep_limit = 500
         self.horizon = 500
@@ -37,7 +40,9 @@ class FixedRunEnv(RunEnv):
         return np.array(super(FixedRunEnv, self).get_observation())
 
     def step(self, action):
+        start_time = time.time()
         next_obs, reward, done, info = super(FixedRunEnv, self).step(action)
+        step_time = time.time() - start_time
 
         # Penalize for pelvis height getting close to 0.65.
         pelvis_y = self.current_state[self.STATE_PELVIS_Y]
@@ -53,6 +58,8 @@ class FixedRunEnv(RunEnv):
         reward -= self._velocity_penalty_mult * vel_squared_sum
 
         reward += self._alive_bonus
+
+        reward -= self._time_penalty * step_time
 
         return next_obs, reward, done, info
 
@@ -83,7 +90,8 @@ def train():
         fall_smoothing_exp=config['fall_smoothing_exp'],
         fall_smoothing_max_penalty=config['fall_smoothing_max_penalty'],
         velocity_penalty_mult=config['velocity_penalty_mult'],
-        alive_bonus=config['alive_bonus'])
+        alive_bonus=config['alive_bonus'],
+        time_penalty=config['time_penalty'])
 
     def policy_fn(name, ob_space, ac_space):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
