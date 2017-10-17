@@ -103,7 +103,8 @@ def train():
             optim_batchsize=config['optim_batchsize'],
             gamma=config['discount'], lam=config['lam'], schedule=config['lr_schedule'],
             load_model=config['load_model'],
-            action_bias=config['action_bias']
+            action_bias=config['action_bias'],
+            action_repeat=config['action_repeat']
         )
     env.close()
 

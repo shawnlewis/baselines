@@ -11,7 +11,7 @@ import os
 import json
 import copy
 
-def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4):
+def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action_repeat=0):
     t = 0
     ac = env.action_space.sample() # not used, just so we have the datatype
     new = True # marks if we're on first timestep of an episode
@@ -30,9 +30,15 @@ def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4):
     acs = np.array([ac for _ in range(horizon)])
     prevacs = acs.copy()
 
+    repeat_left = 0
+
     while True:
         prevac = ac
-        ac, vpred = pi.act(stochastic, ob)
+        if repeat_left:
+            repeat_left -= 1
+        else:
+            ac, vpred = pi.act(stochastic, ob)
+            repeat_left = action_repeat
         # Slight weirdness here because we need value function at time T
         # before returning segment [0, T-1] so we get the correct
         # terminal value
@@ -62,6 +68,7 @@ def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4):
             cur_ep_ret = 0
             cur_ep_len = 0
             ob = env.reset()
+            repeat_left = 0
         t += 1
 
 def add_vtarg_and_adv(seg, gamma, lam):
@@ -90,7 +97,8 @@ def learn(env, policy_func,
         adam_epsilon=1e-5,
         schedule='constant', # annealing for stepsize parameters (epsilon and adam)
         load_model=None,
-        action_bias=0.4
+        action_bias=0.4,
+        action_repeat=0
         ):
     # Setup losses and stuff
     # ----------------------------------------
@@ -140,7 +148,7 @@ def learn(env, policy_func,
 
     # Prepare for rollouts
     # ----------------------------------------
-    seg_gen = traj_segment_generator(pi, env, timesteps_per_batch, stochastic=True, action_bias=action_bias)
+    seg_gen = traj_segment_generator(pi, env, timesteps_per_batch, stochastic=True, action_bias=action_bias, action_repeat=action_repeat)
 
     episodes_so_far = 0
     timesteps_so_far = 0

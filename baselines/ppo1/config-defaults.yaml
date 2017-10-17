@@ -12,9 +12,11 @@ difficulty:
 init_pol_weight_stddev:
   value: 0.3
 init_logstd:
-  value: -2
+  value: -1.5
 action_bias:
-  value: 0.2
+  value: 0.5
+action_repeat:
+  value: 32
 fall_smoothing_exp:
   desc: Reward-shaping. Fall smoothing exponent
   value: 2.0
@@ -69,4 +71,4 @@ hidden_layers:
 load_model:
   value: False
 #load_model:
-#  value: checkpoints/izuqpika-alive5/model-222.ckpt
+#  value: checkpoints/fzwo6kqj-init/model-133.ckpt
