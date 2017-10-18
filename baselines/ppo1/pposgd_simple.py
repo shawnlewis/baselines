@@ -271,9 +271,9 @@ def learn(env, policy_func,
             logger.record_tabular("loss_"+name, lossval)
         # check kl
         if schedule == 'target_kl':
-            if meanlosses[3] > target_kl * 1.1:
+            if meanlosses[2] > target_kl * 1.1:
                 cur_lrmult /= 1.5
-            elif meanlosses[3] < target_kl / 1.1:
+            elif meanlosses[2] < target_kl / 1.1:
                 cur_lrmult *= 1.5
         logger.record_tabular("ev_tdlam_before", explained_variance(vpredbefore, tdlamret))
         lrlocal = (seg["ep_lens"], seg["ep_rets"]) # local values
