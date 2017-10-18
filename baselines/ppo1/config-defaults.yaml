@@ -58,7 +58,9 @@ optim_batchsize:
   value: 16
 optim_stepsize:
   desc: Adam step size per update
-  value: 0.0003
+  value: 0.0000003
+vf_loss_mult:
+  value: 100000
 target_kl:
   desc: target KL
   value: 0.001
@@ -80,4 +82,4 @@ hidden_layers:
 load_model:
   value: False
 load_model:
-  value: checkpoints/urjw5h2p-norepeat/model-152.ckpt
+  value: checkpoints/9yyri2nb-moar/model-45.ckpt

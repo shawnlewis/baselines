@@ -119,7 +119,8 @@ def learn(env, policy_func,
         action_repeat=0,
         action_repeat_rand=False,
         warmup_frames=0,
-        target_kl=0.01
+        target_kl=0.01,
+        vf_loss_mult=1
         ):
     # Setup losses and stuff
     # ----------------------------------------
@@ -147,7 +148,7 @@ def learn(env, policy_func,
     surr1 = ratio * atarg # surrogate from conservative policy iteration
     surr2 = U.clip(ratio, 1.0 - clip_param, 1.0 + clip_param) * atarg #
     pol_surr = - U.mean(tf.minimum(surr1, surr2)) # PPO's pessimistic surrogate (L^CLIP)
-    vf_loss = U.mean(tf.square(pi.vpred - ret))
+    vf_loss = U.mean(tf.square(pi.vpred - ret)) * vf_loss_mult
     total_loss = pol_surr + pol_entpen + vf_loss
     losses = [pol_surr, pol_entpen, vf_loss, meankl, meanent]
     loss_names = ["pol_surr", "pol_entpen", "vf_loss", "kl", "ent"]

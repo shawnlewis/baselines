@@ -115,7 +115,8 @@ def train():
             action_repeat=config['action_repeat'],
             action_repeat_rand=config['action_repeat_rand'],
             target_kl=config['target_kl'],
-            warmup_frames=config['warmup_frames']
+            warmup_frames=config['warmup_frames'],
+            vf_loss_mult=config['vf_loss_mult']
         )
     env.close()
 
