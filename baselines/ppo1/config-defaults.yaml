@@ -16,9 +16,11 @@ init_logstd:
 action_bias:
   value: 0.5
 action_repeat:
-  value: 8
+  value: 0
 action_repeat_rand:
-  value: True
+  value: False
+warmup_frames:
+  value: 0
 time_penalty:
   value: 0.2
 fall_smoothing_exp:
@@ -78,4 +80,4 @@ hidden_layers:
 load_model:
   value: False
 load_model:
-  value: checkpoints/5rpdymbm-timepen/model-40.ckpt
+  value: checkpoints/urjw5h2p-norepeat/model-152.ckpt

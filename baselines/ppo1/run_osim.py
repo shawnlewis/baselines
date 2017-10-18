@@ -114,7 +114,8 @@ def train():
             action_bias=config['action_bias'],
             action_repeat=config['action_repeat'],
             action_repeat_rand=config['action_repeat_rand'],
-            target_kl=config['target_kl']
+            target_kl=config['target_kl'],
+            warmup_frames=config['warmup_frames']
         )
     env.close()
 

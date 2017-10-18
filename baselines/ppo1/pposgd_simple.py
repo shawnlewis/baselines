@@ -12,7 +12,7 @@ import json
 import copy
 import random
 
-def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action_repeat=0, action_repeat_rand=False):
+def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action_repeat=0, action_repeat_rand=False, warmup_frames=0):
     t = 0
     ac = env.action_space.sample() # not used, just so we have the datatype
     new = True # marks if we're on first timestep of an episode
@@ -33,8 +33,20 @@ def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action
 
     repeat_left = 0
 
+    warmup_left = warmup_frames
+
     while True:
         prevac = ac
+
+        if warmup_left:
+            if warmup_left == warmup_frames:
+                ac = env.action_space.sample().round() - .2
+            _, _, new, _ = env.step(ac)
+            warmup_left -= 1
+            if new:
+                env.reset()
+            continue
+
         if repeat_left:
             repeat_left -= 1
         else:
@@ -43,6 +55,7 @@ def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action
                 repeat_left = random.randrange(action_repeat)
             else:
                 repeat_left = action_repeat
+
         # Slight weirdness here because we need value function at time T
         # before returning segment [0, T-1] so we get the correct
         # terminal value
@@ -72,6 +85,7 @@ def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action
             cur_ep_ret = 0
             cur_ep_len = 0
             ob = env.reset()
+            warmup_left = warmup_frames
             repeat_left = 0
         t += 1
 
@@ -104,6 +118,7 @@ def learn(env, policy_func,
         action_bias=0.4,
         action_repeat=0,
         action_repeat_rand=False,
+        warmup_frames=0,
         target_kl=0.01
         ):
     # Setup losses and stuff
@@ -155,7 +170,7 @@ def learn(env, policy_func,
 
     # Prepare for rollouts
     # ----------------------------------------
-    seg_gen = traj_segment_generator(pi, env, timesteps_per_batch, stochastic=True, action_bias=action_bias, action_repeat=action_repeat, action_repeat_rand=action_repeat_rand)
+    seg_gen = traj_segment_generator(pi, env, timesteps_per_batch, stochastic=True, action_bias=action_bias, action_repeat=action_repeat, action_repeat_rand=action_repeat_rand, warmup_frames=warmup_frames)
 
     episodes_so_far = 0
     timesteps_so_far = 0
