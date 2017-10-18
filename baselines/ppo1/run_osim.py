@@ -116,7 +116,10 @@ def train():
             action_repeat_rand=config['action_repeat_rand'],
             target_kl=config['target_kl'],
             warmup_frames=config['warmup_frames'],
-            vf_loss_mult=config['vf_loss_mult']
+            vf_loss_mult=config['vf_loss_mult'],
+            vfloss_optim_stepsize=config['vfloss_optim_stepsize'],
+            vfloss_optim_batchsize=config['vfloss_optim_batchsize'],
+            vfloss_optim_epochs=config['vfloss_optim_epochs']
         )
     env.close()
 

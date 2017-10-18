@@ -120,7 +120,10 @@ def learn(env, policy_func,
         action_repeat_rand=False,
         warmup_frames=0,
         target_kl=0.01,
-        vf_loss_mult=1
+        vf_loss_mult=1,
+        vfloss_optim_stepsize=0.003,
+        vfloss_optim_batchsize=8,
+        vfloss_optim_epochs=10
         ):
     # Setup losses and stuff
     # ----------------------------------------
@@ -148,10 +151,10 @@ def learn(env, policy_func,
     surr1 = ratio * atarg # surrogate from conservative policy iteration
     surr2 = U.clip(ratio, 1.0 - clip_param, 1.0 + clip_param) * atarg #
     pol_surr = - U.mean(tf.minimum(surr1, surr2)) # PPO's pessimistic surrogate (L^CLIP)
-    vf_loss = U.mean(tf.square(pi.vpred - ret)) * vf_loss_mult
-    total_loss = pol_surr + pol_entpen + vf_loss
-    losses = [pol_surr, pol_entpen, vf_loss, meankl, meanent]
-    loss_names = ["pol_surr", "pol_entpen", "vf_loss", "kl", "ent"]
+    vf_loss = U.mean(tf.square(pi.vpred - ret))
+    total_loss = pol_surr + pol_entpen
+    losses = [pol_surr, pol_entpen, meankl, meanent]
+    loss_names = ["pol_surr", "pol_entpen", "kl", "ent"]
 
     var_list = pi.get_trainable_variables()
     lossandgrad = U.function([ob, ac, atarg, ret, lrmult], losses + [U.flatgrad(total_loss, var_list)])
@@ -161,8 +164,13 @@ def learn(env, policy_func,
         for (oldv, newv) in zipsame(oldpi.get_variables(), pi.get_variables())])
     compute_losses = U.function([ob, ac, atarg, ret, lrmult], losses)
 
+    lossandgrad_vfloss = U.function([ob, ac, atarg, ret], [vf_loss] + [U.flatgrad(vf_loss, var_list)])
+    adam_vfloss = MpiAdam(var_list, epsilon=adam_epsilon)
+    compute_vfloss = U.function([ob, ac, atarg, ret], [vf_loss])
+
     U.initialize()
     adam.sync()
+    adam_vfloss.sync()
 
     if load_model:
         logger.log('Loading model: %s' % load_model)
@@ -238,14 +246,28 @@ def learn(env, policy_func,
                 losses.append(newlosses)
             logger.log(fmt_row(13, np.mean(losses, axis=0)))
 
+        # vfloss optimize
+        logger.log("Optimizing value function...")
+        logger.log(fmt_row(13, ['vf']))
+        for _ in range(vfloss_optim_epochs):
+            losses = [] # list of tuples, each of which gives the loss for a minibatch
+            for batch in d.iterate_once(vfloss_optim_batchsize):
+                result = lossandgrad_vfloss(batch["ob"], batch["ac"], batch["atarg"], batch["vtarg"])
+                newlosses = result[:-1]
+                g = result[-1]
+                adam_vfloss.update(g, vfloss_optim_stepsize) 
+                losses.append(newlosses)
+            logger.log(fmt_row(13, np.mean(losses, axis=0)))
+
         logger.log("Evaluating losses...")
         losses = []
         for batch in d.iterate_once(optim_batchsize):
             newlosses = compute_losses(batch["ob"], batch["ac"], batch["atarg"], batch["vtarg"], cur_lrmult)
+            newlosses += compute_vfloss(batch["ob"], batch["ac"], batch["atarg"], batch["vtarg"])
             losses.append(newlosses)            
         meanlosses,_,_ = mpi_moments(losses, axis=0)
         logger.log(fmt_row(13, meanlosses))
-        for (lossval, name) in zipsame(meanlosses, loss_names):
+        for (lossval, name) in zipsame(meanlosses, loss_names + ['vf']):
             logger.record_tabular("loss_"+name, lossval)
         # check kl
         if schedule == 'target_kl':
