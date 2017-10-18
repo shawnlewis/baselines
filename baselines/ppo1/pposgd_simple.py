@@ -56,29 +56,33 @@ def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action
             else:
                 repeat_left = action_repeat
 
-        # Slight weirdness here because we need value function at time T
-        # before returning segment [0, T-1] so we get the correct
-        # terminal value
-        if t > 0 and t % horizon == 0:
-            yield {"ob" : obs, "rew" : rews, "vpred" : vpreds, "new" : news,
-                    "ac" : acs, "prevac" : prevacs, "nextvpred": vpred * (1 - new),
-                    "ep_rets" : ep_rets, "ep_lens" : ep_lens}
-            # Be careful!!! if you change the downstream algorithm to aggregate
-            # several of these batches, then be sure to do a deepcopy
-            ep_rets = []
-            ep_lens = []
-        i = t % horizon
-        obs[i] = ob
-        vpreds[i] = vpred
-        news[i] = new
-        acs[i] = ac
-        prevacs[i] = prevac
+        if repeat_left == action_repeat:
+            # Slight weirdness here because we need value function at time T
+            # before returning segment [0, T-1] so we get the correct
+            # terminal value
+            if t > 0 and t % horizon == 0:
+                yield {"ob" : obs, "rew" : rews, "vpred" : vpreds, "new" : news,
+                        "ac" : acs, "prevac" : prevacs, "nextvpred": vpred * (1 - new),
+                        "ep_rets" : ep_rets, "ep_lens" : ep_lens}
+                # Be careful!!! if you change the downstream algorithm to aggregate
+                # several of these batches, then be sure to do a deepcopy
+                ep_rets = []
+                ep_lens = []
+            i = t % horizon
+            obs[i] = ob
+            vpreds[i] = vpred
+            news[i] = new
+            acs[i] = ac
+            prevacs[i] = prevac
 
         ob, rew, new, _ = env.step(action_bias + ac)
-        rews[i] = rew
 
-        cur_ep_ret += rew
-        cur_ep_len += 1
+        if repeat_left == action_repeat:
+            rews[i] = rew
+
+            cur_ep_ret += rew
+            cur_ep_len += 1
+
         if new:
             ep_rets.append(cur_ep_ret)
             ep_lens.append(cur_ep_len)
@@ -87,7 +91,8 @@ def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action
             ob = env.reset()
             warmup_left = warmup_frames
             repeat_left = 0
-        t += 1
+        if repeat_left == action_repeat:
+            t += 1
 
 def add_vtarg_and_adv(seg, gamma, lam):
     """
