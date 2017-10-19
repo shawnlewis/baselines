@@ -12,7 +12,7 @@ class MlpPolicy(object):
             self.scope = tf.get_variable_scope().name
 
     def _init(self, ob_space, ac_space, hid_sizes, num_hid_layers, gaussian_fixed_var=True,
-            init_pol_weight_stddev=0.3, init_logstd=-1.5):
+            init_pol_weight_stddev=0.3, init_val_weight_stddev=0.3, init_logstd=-1.5):
         assert isinstance(ob_space, gym.spaces.Box)
 
         self.pdtype = pdtype = make_pdtype(ac_space)
@@ -26,8 +26,8 @@ class MlpPolicy(object):
         obz = tf.clip_by_value((ob - self.ob_rms.mean) / self.ob_rms.std, -5.0, 5.0)
         last_out = obz
         for i, hid_size in zip(range(num_hid_layers), hid_sizes):
-            last_out = tf.nn.tanh(U.dense(last_out, hid_size, "vffc%i"%(i+1), weight_init=U.normc_initializer(0, 1.0)))
-        self.vpred = U.dense(last_out, 1, "vffinal", weight_init=U.normc_initializer(0, 1.0))[:,0]
+            last_out = tf.nn.tanh(U.dense(last_out, hid_size, "vffc%i"%(i+1), weight_init=U.normc_initializer(0, init_val_weight_stddev)))
+        self.vpred = U.dense(last_out, 1, "vffinal", weight_init=U.normc_initializer(0, init_val_weight_stddev))[:,0]
 
         last_out = obz
         for i, hid_size in zip(range(num_hid_layers), hid_sizes):
@@ -50,6 +50,7 @@ class MlpPolicy(object):
 
     def act(self, stochastic, ob):
         ac1, vpred1 =  self._act(stochastic, ob[None])
+        print(ac1[0], vpred1[0])
         return ac1[0], vpred1[0]
     def get_variables(self):
         return tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, self.scope)

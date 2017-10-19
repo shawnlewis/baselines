@@ -99,6 +99,7 @@ def train():
             num_hid_layers=len(config['hidden_layers']),
             gaussian_fixed_var=True,
             init_pol_weight_stddev=config['init_pol_weight_stddev'],
+            init_val_weight_stddev=config['init_val_weight_stddev'],
             init_logstd=config['init_logstd'])
     #env = bench.Monitor(env, logger.get_dir() and 
     #    osp.join(logger.get_dir(), "monitor.json"))
