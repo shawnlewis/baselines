@@ -34,6 +34,7 @@ def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action
     repeat_left = 0
 
     warmup_left = warmup_frames
+    full_step_rew = 0
 
     while True:
         prevac = ac
@@ -55,7 +56,6 @@ def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action
                 repeat_left = random.randrange(action_repeat)
             else:
                 repeat_left = action_repeat
-                full_step_rew = 0
 
         if repeat_left == action_repeat:
             # Slight weirdness here because we need value function at time T
@@ -95,6 +95,7 @@ def traj_segment_generator(pi, env, horizon, stochastic, action_bias=0.4, action
             ob = env.reset()
             warmup_left = warmup_frames
             repeat_left = 0
+            full_step_rew = 0
         if repeat_left == action_repeat:
             t += 1
 
