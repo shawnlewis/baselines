@@ -50,7 +50,7 @@ class MlpPolicy(object):
 
     def act(self, stochastic, ob):
         ac1, vpred1 =  self._act(stochastic, ob[None])
-        print(ac1[0], vpred1[0])
+        #print(ac1[0], vpred1[0])
         return ac1[0], vpred1[0]
     def get_variables(self):
         return tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, self.scope)
